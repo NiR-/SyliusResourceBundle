@@ -17,6 +17,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\Security\Core\Exception\AccessDeniedException;
 
 /**
  * Base resource controller for Sylius.
@@ -69,6 +70,8 @@ class ResourceController extends FOSRestController
 
     public function showAction(Request $request)
     {
+    	$this->isGrantedOr403('SHOW', $this->find($request));
+		
         $view = $this
             ->view()
             ->setTemplate($this->config->getTemplate('show.html'))
@@ -81,6 +84,8 @@ class ResourceController extends FOSRestController
 
     public function indexAction(Request $request)
     {
+        $this->isGrantedOr403('INDEX');
+		
         $criteria = $this->config->getCriteria();
         $sorting = $this->config->getSorting();
 
@@ -106,6 +111,8 @@ class ResourceController extends FOSRestController
 
     public function createAction(Request $request)
     {
+    	$this->isGrantedOr403('CREATE');
+		
         $resource = $this->createNew();
         $form = $this->getForm($resource);
 
@@ -133,6 +140,8 @@ class ResourceController extends FOSRestController
 
     public function updateAction(Request $request)
     {
+    	$this->isGrantedOr403('UPDATE', $this->find($request));
+		
         $resource = $this->findOr404($request);
         $form = $this->getForm($resource);
 
@@ -160,6 +169,8 @@ class ResourceController extends FOSRestController
 
     public function deleteAction(Request $request)
     {
+    	$this->isGrantedOr403('DELETE', $this->find($request));
+		
         $resource = $this->findOr404($request);
         $this->domainManager->delete($resource);
 
@@ -180,6 +191,19 @@ class ResourceController extends FOSRestController
     {
         return $this->createForm($this->config->getFormType(), $resource);
     }
+	
+	public function find(Request $request, array $criteria = array())
+	{
+        if ($request->get('slug')) {
+            $default = array('slug' => $request->get('slug'));
+        } else {
+            $default = array('id' => $request->get('id'));
+        }
+
+        $criteria = array_merge($default, $criteria);
+		
+		return $this->resourceResolver->getResource($this->getRepository(), 'findOneBy', array($this->config->getCriteria($criteria)));
+	}
 
     /**
      * @param Request $request
@@ -191,15 +215,7 @@ class ResourceController extends FOSRestController
      */
     public function findOr404(Request $request, array $criteria = array())
     {
-        if ($request->get('slug')) {
-            $default = array('slug' => $request->get('slug'));
-        } else {
-            $default = array('id' => $request->get('id'));
-        }
-
-        $criteria = array_merge($default, $criteria);
-
-        if (!$resource = $this->resourceResolver->getResource($this->getRepository(), 'findOneBy', array($this->config->getCriteria($criteria)))) {
+        if (!$resource = $this->find($request, $criteria)) {
             throw new NotFoundHttpException(sprintf(
                 'Requested %s does not exist with these criteria: %s.',
                 $this->config->getResourceName(),
@@ -209,6 +225,16 @@ class ResourceController extends FOSRestController
 
         return $resource;
     }
+	
+	public function isGrantedOr403($roleName, $resource = null)
+	{
+		$config = $this->getConfiguration();
+		$roleName = $config->getRole($roleName);
+		
+		if ($roleName !== false && !$this->get('security.context')->isGranted($roleName, $resource)) {
+			throw new AccessDenieException();
+		}
+	}
 
     /**
      * @return RepositoryInterface

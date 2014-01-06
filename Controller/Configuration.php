@@ -28,6 +28,7 @@ class Configuration
     protected $templatingEngine;
     protected $parameters;
     protected $parser;
+    protected $rolePrefix;
 
     /**
      * Current request.
@@ -36,13 +37,14 @@ class Configuration
      */
     protected $request;
 
-    public function __construct(ParametersParser $parser, $bundlePrefix, $resourceName, $templateNamespace, $templatingEngine = 'twig')
+    public function __construct(ParametersParser $parser, $bundlePrefix, $resourceName, $templateNamespace, $rolePrefix = null, $templatingEngine = 'twig')
     {
         $this->bundlePrefix = $bundlePrefix;
         $this->resourceName = $resourceName;
         $this->templateNamespace = $templateNamespace;
         $this->templatingEngine = $templatingEngine;
         $this->parser = $parser;
+        $this->rolePrefix = $rolePrefix;
     }
 
     public function getRequest()
@@ -78,6 +80,11 @@ class Configuration
     public function getTemplateNamespace()
     {
         return $this->templateNamespace;
+    }
+    
+    public function getRolePrefix()
+    {
+        return $this->rolePrefix;
     }
 
     public function getTemplatingEngine()
@@ -235,7 +242,22 @@ class Configuration
 
         return $this->get('flash', $message);
     }
-
+	
+	public function getRole($name)
+	{
+		if (!empty($this->rolePrefix)) {
+			return $this->get('role', $this->getRoleName($name));
+		}
+		else {
+			return $this->get('role', false);
+		}
+	}
+	
+	public function getRoleName($name)
+	{
+		return sprintf('%s_%s', $this->rolePrefix, $name);
+	}
+    
     protected function get($parameter, $default = null)
     {
         return isset($this->parameters[$parameter]) ? $this->parameters[$parameter] : $default;

@@ -70,7 +70,13 @@ class SyliusResourceExtension extends Extension
                 throw new \InvalidArgumentException(sprintf('Driver "%s" is unsupported, no factory exists for creating services', $config['driver']));
             }
 
-            $factory->create($prefix, $resourceName, $config['classes'], array_key_exists('templates', $config) ? $config['templates'] : null);
+            $factory->create(
+            	$prefix, 
+            	$resourceName, 
+            	$config['classes'], 
+            	array_key_exists('templates', $config) ? $config['templates'] : null, 
+            	array_key_exists('role_prefix', $config) ? $config['rolePrefix'] : null
+			);
         }
     }
 

@@ -18,14 +18,14 @@ use Symfony\Component\DependencyInjection\Reference;
 
 class DoctrineODMFactory extends AbstractFactory
 {
-    public function create($prefix, $resourceName, array $classes, $templates = null)
+    public function create($prefix, $resourceName, array $classes, $templates = null, $rolePrefix = null)
     {
         $pattern = $prefix.'.%s.'.$resourceName;
         $documentManagerId = 'doctrine.odm.mongodb.document_manager';
 
         $controller = new Definition($classes['controller']);
         $controller
-            ->setArguments(array($prefix, $resourceName, $templates))
+            ->setArguments(array($prefix, $resourceName, $templates, $rolePrefix))
             ->addMethodCall('setContainer', array(new Reference('service_container')))
         ;
 

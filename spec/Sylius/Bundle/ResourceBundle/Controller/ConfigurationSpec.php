@@ -19,7 +19,7 @@ class ConfigurationSpec extends ObjectBehavior
      */
     function let($request, $parser)
     {
-        $this->beConstructedWith($parser, 'sylius', 'product', 'SyliusWebBundle:Product', 'twig');
+        $this->beConstructedWith($parser, 'sylius', 'product', 'SyliusWebBundle:Product', 'twig', 'ROLE');
         $request->attributes = new ParameterBag();
     }
 
@@ -52,6 +52,11 @@ class ConfigurationSpec extends ObjectBehavior
     {
         $this->getTemplatingEngine()->shouldReturn('twig');
     }
+    
+    function it_returns_assigned_role_prefix()
+    {
+        $this->getRolePrefix()->shouldReturn('ROLE');
+    }
 
     function it_generates_service_names()
     {
@@ -81,6 +86,15 @@ class ConfigurationSpec extends ObjectBehavior
         $this->getRouteName('index')->shouldReturn('sylius_product_index');
         $this->getRouteName('show')->shouldReturn('sylius_product_show');
         $this->getRouteName('custom')->shouldReturn('sylius_product_custom');
+    }
+    
+    function it_generates_roles_name()
+    {
+        $this->getRoleName('INDEX')->shouldReturn('ROLE_INDEX');
+        $this->getRoleName('SHOW')->shouldReturn('ROLE_SHOW');
+        $this->getRoleName('CREATE')->shouldReturn('ROLE_CREATE');
+        $this->getRoleName('UPDATE')->shouldReturn('ROLE_UPDATE');
+        $this->getRoleName('DELETE')->shouldReturn('ROLE_DELETE');
     }
 
     function its_not_sortable_by_default($request)
