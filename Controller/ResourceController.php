@@ -35,6 +35,7 @@ class ResourceController extends FOSRestController
      */
     protected $configuration;
     protected $resolver;
+    protected $enableRoleCheck;
 
     /**
      * Constructor.
@@ -44,10 +45,11 @@ class ResourceController extends FOSRestController
      * @param string $templateNamespace
      * @param string $templatingEngine
      */
-    public function __construct($bundlePrefix, $resourceName, $templateNamespace, $templatingEngine = 'twig')
+    public function __construct($bundlePrefix, $resourceName, $templateNamespace, $templatingEngine = 'twig', $rolePrefix = null)
     {
-        $this->configuration = new Configuration($bundlePrefix, $resourceName, $templateNamespace, $templatingEngine);
+        $this->configuration = new Configuration($bundlePrefix, $resourceName, $templateNamespace, $templatingEngine, rtrim($rolePrefix, '_'));
         $this->configured = false;
+        $this->enableRoleCheck = null !== $rolePrefix;
     }
 
     /**
@@ -68,6 +70,10 @@ class ResourceController extends FOSRestController
     public function indexAction(Request $request)
     {
         $config = $this->getConfiguration();
+        
+        if ($this->enableRoleCheck) {
+            $this->isGrantedOr403('INDEX');
+        }
 
         $criteria = $config->getCriteria();
         $sorting = $config->getSorting();
@@ -108,6 +114,10 @@ class ResourceController extends FOSRestController
     public function showAction()
     {
         $config = $this->getConfiguration();
+        
+        if ($this->enableRoleCheck) {
+            $this->isGrantedOr403('SHOW');
+        }
 
         $view = $this
             ->view()
@@ -125,6 +135,10 @@ class ResourceController extends FOSRestController
     public function createAction(Request $request)
     {
         $config = $this->getConfiguration();
+        
+        if ($this->enableRoleCheck) {
+            $this->isGrantedOr403('CREATE');
+        }
 
         $resource = $this->createNew();
         $form = $this->getForm($resource);
@@ -162,6 +176,10 @@ class ResourceController extends FOSRestController
     public function updateAction(Request $request)
     {
         $config = $this->getConfiguration();
+        
+        if ($this->enableRoleCheck) {
+            $this->isGrantedOr403('UPDATE');
+        }
 
         $resource = $this->findOr404();
         $form = $this->getForm($resource);
@@ -199,6 +217,10 @@ class ResourceController extends FOSRestController
     public function deleteAction(Request $request)
     {
         $resource = $this->findOr404();
+        
+        if ($this->enableRoleCheck) {
+            $this->isGrantedOr403('DELETE');
+        }
 
         if ($request->request->get('confirmed', false)) {
             $event = $this->delete($resource);
@@ -447,5 +469,15 @@ class ResourceController extends FOSRestController
     protected function getService($name)
     {
         return $this->get($this->getConfiguration()->getServiceName($name));
+    }
+    
+    public function isGrantedOr403($roleName)
+    {
+        $config = $this->getConfiguration();
+        $roleName = $config->getRole($roleName);
+        
+        if (!$this->get('security.context')->isGranted($roleName)) {
+            throw new AccessDeniedHttpException();
+        }
     }
 }

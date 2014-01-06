@@ -18,7 +18,7 @@ class ResourceControllerSpec extends ObjectBehavior
      */
     function let($container, $request, $attributes)
     {
-        $this->beConstructedWith('sylius_resource', 'test', 'SyliusResourceBundle:Test');
+        $this->beConstructedWith('sylius_resource', 'test', 'SyliusResourceBundle:Test', 'ROLE');
 
         $request->attributes = $attributes;
         $container->get('request')->willReturn($request);

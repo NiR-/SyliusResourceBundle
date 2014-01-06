@@ -27,6 +27,7 @@ class Configuration
     protected $templateNamespace;
     protected $templatingEngine;
     protected $parameters;
+    protected $rolePrefix;
 
     /**
      * Current request.
@@ -35,13 +36,14 @@ class Configuration
      */
     protected $request;
 
-    public function __construct($bundlePrefix, $resourceName, $templateNamespace, $templatingEngine = 'twig')
+    public function __construct($bundlePrefix, $resourceName, $templateNamespace, $templatingEngine = 'twig', $rolePrefix = null)
     {
 
         $this->bundlePrefix = $bundlePrefix;
         $this->resourceName = $resourceName;
         $this->templateNamespace = $templateNamespace;
         $this->templatingEngine = $templatingEngine;
+        $this->rolePrefix = $rolePrefix;
 
         $this->parameters = array();
     }
@@ -81,6 +83,11 @@ class Configuration
     public function getTemplatingEngine()
     {
         return $this->templatingEngine;
+    }
+    
+    public function getRolePrefix()
+    {
+        return $this->rolePrefix;
     }
 
     public function isApiRequest()
@@ -213,7 +220,17 @@ class Configuration
 
         return $this->get('flash', $message);
     }
-
+    
+    public function getRole($name)
+    {
+        return $this->get('role', $this->getRoleName($name));
+    }
+    
+    public function getRoleName($name)
+    {
+        return sprintf('%s_%s', $this->rolePrefix, $name);
+    }
+    
     protected function get($parameter, $default = null)
     {
         return isset($this->parameters[$parameter]) ? $this->parameters[$parameter] : $default;
