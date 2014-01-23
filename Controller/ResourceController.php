@@ -235,7 +235,7 @@ class ResourceController extends FOSRestController
 			throw new AccessDenieException();
 		}
 	}
-
+    
     /**
      * @return RepositoryInterface
      */
