@@ -119,12 +119,12 @@ class Configuration
 
     public function getFormType()
     {
-        return $this->get('form', sprintf('%s_%s', $this->bundlePrefix, $this->resourceName));
+        return $this->get('form', sprintf('%s_%s', str_replace('.', '_', $this->bundlePrefix), $this->resourceName));
     }
 
     public function getRouteName($name)
     {
-        return sprintf('%s_%s_%s', $this->bundlePrefix, $this->resourceName, $name);
+        return sprintf('%s_%s_%s', str_replace('.', '_', $this->bundlePrefix), $this->resourceName, $name);
     }
 
     public function getRedirectRoute($name)

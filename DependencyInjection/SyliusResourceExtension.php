@@ -63,20 +63,20 @@ class SyliusResourceExtension extends Extension
     private function createResourceServices(array $configs)
     {
         foreach ($configs as $name => $config) {
-            list($prefix, $resourceName) = explode('.', $name);
-
-            $factory = $this->getFactoryForDriver($config['driver']);
-            if (!$factory) {
-                throw new \InvalidArgumentException(sprintf('Driver "%s" is unsupported, no factory exists for creating services', $config['driver']));
+            if (preg_match('#^(.+)\.(.+)$#', $name, $matches)) {
+                $factory = $this->getFactoryForDriver($config['driver']);
+                if (!$factory) {
+                    throw new \InvalidArgumentException(sprintf('Driver "%s" is unsupported, no factory exists for creating services', $config['driver']));
+                }
+    
+                $factory->create(
+                    $matches[1], 
+                    $matches[2], 
+                    $config['classes'], 
+                    array_key_exists('templates', $config) ? $config['templates'] : null, 
+                    array_key_exists('role_prefix', $config) ? $config['role_prefix'] : null
+                );
             }
-
-            $factory->create(
-            	$prefix, 
-            	$resourceName, 
-            	$config['classes'], 
-            	array_key_exists('templates', $config) ? $config['templates'] : null, 
-            	array_key_exists('role_prefix', $config) ? $config['rolePrefix'] : null
-			);
         }
     }
 
