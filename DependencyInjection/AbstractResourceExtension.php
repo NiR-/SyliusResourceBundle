@@ -11,10 +11,9 @@
 
 namespace Sylius\Bundle\ResourceBundle\DependencyInjection;
 
-use Sylius\Bundle\ResourceBundle\DependencyInjection\Factory\DatabaseDriverFactoryInterface;
-use Sylius\Bundle\ResourceBundle\DependencyInjection\Factory\DoctrineODMFactory;
-use Sylius\Bundle\ResourceBundle\DependencyInjection\Factory\DoctrineORMFactory;
-use Sylius\Bundle\ResourceBundle\DependencyInjection\Factory\ResourceServicesFactory;
+use Sylius\Bundle\ResourceBundle\DependencyInjection\Driver\DatabaseDriverFactory;
+use Sylius\Bundle\ResourceBundle\Exception\Driver\InvalidDriverException;
+use Sylius\Bundle\ResourceBundle\Exception\Driver\UnknownDriverException;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 use Symfony\Component\Config\Definition\Processor;
 use Symfony\Component\Config\FileLocator;
@@ -27,14 +26,15 @@ use Symfony\Component\HttpKernel\DependencyInjection\Extension;
  *
  * @author Paweł Jędrzejewski <pjedrzejewski@sylius.pl>
  */
-abstract class BaseExtension extends Extension
+abstract class AbstractResourceExtension extends Extension
 {
     const CONFIGURE_LOADER     = 1;
     const CONFIGURE_DATABASE   = 2;
     const CONFIGURE_PARAMETERS = 4;
     const CONFIGURE_VALIDATORS = 8;
 
-    protected $configDir;
+    protected $applicationName = 'sylius';
+    protected $configDirectory = '/../Resources/config';
     protected $configFiles = array(
         'services',
     );
@@ -44,29 +44,29 @@ abstract class BaseExtension extends Extension
      */
     public function load(array $config, ContainerBuilder $container)
     {
-        $this->configDir = __DIR__.'/../Resources/config/container';
-
-        list($config) = $this->configure($config, new Configuration(), $container);
+        $this->configure($config, new Configuration(), $container);
     }
 
     /**
      * @param array                  $config
      * @param ConfigurationInterface $configuration
      * @param ContainerBuilder       $container
-     * @param mixed                  $configure
+     * @param integer                $configure
      *
      * @return array
      */
-    public function configure(array $config, ConfigurationInterface $configuration, ContainerBuilder $container, $configure = self::CONFIGURE_LOADER)
-    {
+    public function configure(
+        array $config,
+        ConfigurationInterface $configuration,
+        ContainerBuilder $container,
+        $configure = self::CONFIGURE_LOADER
+    ) {
         $processor = new Processor();
         $config    = $processor->processConfiguration($configuration, $config);
 
-        $loader = new XmlFileLoader($container, new FileLocator($this->configDir));
+        $loader = new XmlFileLoader($container, new FileLocator($this->getConfigurationDirectory()));
 
-        foreach ($this->configFiles as $filename) {
-            $loader->load($filename.'.xml');
-        }
+        $this->loadConfigurationFile($this->configFiles, $loader);
 
         if ($configure & self::CONFIGURE_DATABASE) {
             $this->loadDatabaseDriver($config, $loader, $container);
@@ -101,7 +101,15 @@ abstract class BaseExtension extends Extension
     {
         foreach ($classes as $model => $serviceClasses) {
             foreach ($serviceClasses as $service => $class) {
-                $container->setParameter(sprintf('sylius.%s.%s.class', $service === 'form' ? 'form.type' : $service, $model), $class);
+                $container->setParameter(
+                    sprintf(
+                        '%s.%s.%s.class',
+                        $this->applicationName,
+                        $service === 'form' ? 'form.type' : $service,
+                        $model
+                    ),
+                    $class
+                );
             }
         }
     }
@@ -115,7 +123,7 @@ abstract class BaseExtension extends Extension
     protected function mapValidationGroupParameters(array $validationGroups, ContainerBuilder $container)
     {
         foreach ($validationGroups as $model => $groups) {
-            $container->setParameter(sprintf('sylius.validation_group.%s', $model), $groups);
+            $container->setParameter(sprintf('%s.validation_group.%s', $this->applicationName, $model), $groups);
         }
     }
 
@@ -126,44 +134,62 @@ abstract class BaseExtension extends Extension
      * @param XmlFileLoader         $loader
      * @param null|ContainerBuilder $container
      *
-     * @throws \InvalidArgumentException
+     * @throws UnknownDriverException
      */
-    protected function loadDatabaseDriver(array $config, XmlFileLoader $loader, ContainerBuilder $container = null)
+    protected function loadDatabaseDriver(array $config, XmlFileLoader $loader, ContainerBuilder $container)
     {
         $bundle = str_replace(array('Extension', 'DependencyInjection\\'), array('Bundle', ''), get_class($this));
         $driver = $config['driver'];
 
         if (!in_array($driver, call_user_func(array($bundle, 'getSupportedDrivers')))) {
-            throw new \InvalidArgumentException(sprintf('Driver "%s" is unsupported by %s.', $driver, basename($bundle)));
+            throw new InvalidDriverException($driver, basename($bundle));
         }
 
-        $file = sprintf('driver/%s.xml', $driver);
-
-        if (file_exists($this->configDir.'/'.$file)) {
-            $loader->load($file);
-        }
+        $this->loadConfigurationFile(array(sprintf('driver/%s', $driver)), $loader);
 
         $container->setParameter($this->getAlias().'.driver', $driver);
         $container->setParameter($this->getAlias().'.driver.'.$driver, true);
 
-        $factory = $this->getFactoryForDriver($driver, $container);
-
         foreach ($config['classes'] as $model => $classes) {
             if (array_key_exists('model', $classes)) {
-                $factory->create('sylius', $model, $classes);
+                DatabaseDriverFactory::get(
+                    $driver,
+                    $container,
+                    $this->applicationName,
+                    $model
+                )->load($classes);
             }
         }
     }
 
     /**
-     * @param $driver
-     *
-     * @return DatabaseDriverFactoryInterface
+     * @param array         $config
+     * @param XmlFileLoader $loader
      */
-    private function getFactoryForDriver($driver, ContainerBuilder $container)
+    protected function loadConfigurationFile(array $config, XmlFileLoader $loader)
     {
-        if ('doctrine/orm' === $driver) {
-            return new DoctrineORMFactory($container);
+        foreach ($config as $filename) {
+            if (file_exists($file = sprintf('%s/%s.xml', $this->getConfigurationDirectory(), $filename))) {
+                $loader->load($file);
+            }
         }
+    }
+
+    /**
+     * Get the configuration directory
+     *
+     * @return string
+     * @throws \Exception
+     */
+    protected function getConfigurationDirectory()
+    {
+        $reflector = new \ReflectionClass($this);
+        $fileName = $reflector->getFileName();
+
+        if (!is_dir($directory = dirname($fileName) . $this->configDirectory)) {
+            throw new \Exception(sprintf('The configuration directory "%s" does not exists.', $directory));
+        }
+
+        return $directory;
     }
 }

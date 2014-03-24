@@ -11,9 +11,7 @@
 
 namespace Sylius\Bundle\ResourceBundle\DependencyInjection;
 
-use Sylius\Bundle\ResourceBundle\DependencyInjection\Factory\DatabaseDriverFactoryInterface;
-use Sylius\Bundle\ResourceBundle\DependencyInjection\Factory\ResourceServicesFactory;
-use Symfony\Component\Config\Definition\ConfigurationInterface;
+use Sylius\Bundle\ResourceBundle\DependencyInjection\Driver\DatabaseDriverFactory;
 use Symfony\Component\Config\Definition\Processor;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -27,8 +25,6 @@ use Symfony\Component\HttpKernel\DependencyInjection\Extension;
  */
 class SyliusResourceExtension extends Extension
 {
-    private $factories = array();
-
     /**
      * {@inheritdoc}
      */
@@ -52,49 +48,22 @@ class SyliusResourceExtension extends Extension
     }
 
     /**
-     * Adds a factory that is able to handle a specific database driver type
-     *
-     * @param $factory
+     * @param array            $configs
+     * @param ContainerBuilder $container
      */
-    public function addDatabaseDriverFactory(DatabaseDriverFactoryInterface $factory)
-    {
-        $this->factories[$factory->getSupportedDriver()] = $factory;
-    }
-
-    /**
-     * @param array $configs
-     *
-     * @throws \InvalidArgumentException
-     */
-    private function createResourceServices(array $configs)
+    private function createResourceServices(array $configs, ContainerBuilder $container)
     {
         foreach ($configs as $name => $config) {
             if (preg_match('#^(.+)\.(.+)$#', $name, $matches)) {
-                $factory = $this->getFactoryForDriver($config['driver']);
-                if (!$factory) {
-                    throw new \InvalidArgumentException(sprintf('Driver "%s" is unsupported, no factory exists for creating services', $config['driver']));
-                }
-    
-                $factory->create(
+                DatabaseDriverFactory::get(
+                    $config['driver'],
+                    $container,
                     $matches[1], 
                     $matches[2], 
-                    $config['classes'], 
                     array_key_exists('templates', $config) ? $config['templates'] : null, 
                     array_key_exists('role_prefix', $config) ? $config['role_prefix'] : null
-                );
+                )->load($config['classes']);
             }
-        }
-    }
-
-    /**
-     * @param $driver
-     *
-     * @return DatabaseDriverFactoryInterface
-     */
-    private function getFactoryForDriver($driver)
-    {
-        if (isset($this->factories[$driver])) {
-            return $this->factories[$driver];
         }
     }
 }

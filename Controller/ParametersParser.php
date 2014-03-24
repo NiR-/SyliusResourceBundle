@@ -11,7 +11,7 @@
 
 namespace Sylius\Bundle\ResourceBundle\Controller;
 
-use Symfony\Component\ExpressionLanguage\ExpressionLanguage;
+use Sylius\Bundle\ResourceBundle\ExpressionLanguage\ExpressionLanguage;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\PropertyAccess\PropertyAccess;
 
@@ -22,6 +22,9 @@ use Symfony\Component\PropertyAccess\PropertyAccess;
  */
 class ParametersParser
 {
+    /**
+     * @var ExpressionLanguage
+     */
     private $expression;
 
     public function __construct(ExpressionLanguage $expression)
@@ -29,6 +32,12 @@ class ParametersParser
         $this->expression = $expression;
     }
 
+    /**
+     * @param array   $parameters
+     * @param Request $request
+     *
+     * @return array
+     */
     public function parse(array &$parameters, Request $request)
     {
         foreach ($parameters as $key => $value) {
@@ -39,11 +48,21 @@ class ParametersParser
             if (is_string($value) && 0 === strpos($value, '$')) {
                 $parameters[$key] = $request->get(substr($value, 1));
             }
+
+            if (is_string($value) && 0 === strpos($value, 'expr:')) {
+                $parameters[$key] = $this->expression->evaluate(substr($value, 5));
+            }
         }
 
         return $parameters;
     }
 
+    /**
+     * @param array  $parameters
+     * @param object $resource
+     *
+     * @return array
+     */
     public function process(array &$parameters, $resource)
     {
         $accessor = PropertyAccess::createPropertyAccessor();

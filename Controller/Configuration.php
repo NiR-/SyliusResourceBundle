@@ -22,12 +22,39 @@ use Symfony\Component\HttpFoundation\Request;
  */
 class Configuration
 {
+    /**
+     * @var string
+     */
     protected $bundlePrefix;
+
+    /**
+     * @var string
+     */
     protected $resourceName;
+
+    /**
+     * @var string
+     */
     protected $templateNamespace;
+
+    /**
+     * @var string
+     */
     protected $templatingEngine;
+
+    /**
+     * @var array
+     */
     protected $parameters;
+
+    /**
+     * @var ParametersParser
+     */
     protected $parser;
+    
+    /**
+     * @var string|null
+     */
     protected $rolePrefix;
 
     /**
@@ -36,9 +63,15 @@ class Configuration
      * @var Request
      */
     protected $request;
-
-    public function __construct(ParametersParser $parser, $bundlePrefix, $resourceName, $templateNamespace, $rolePrefix = null, $templatingEngine = 'twig')
-    {
+    
+    public function __construct(
+        ParametersParser $parser,
+        $bundlePrefix,
+        $resourceName,
+        $templateNamespace,
+        $rolePrefix = null,
+        $templatingEngine = 'twig'
+    ) {
         $this->bundlePrefix = $bundlePrefix;
         $this->resourceName = $resourceName;
         $this->templateNamespace = $templateNamespace;
@@ -142,6 +175,11 @@ class Configuration
         return $redirect;
     }
 
+    /**
+     * @param object|null $resource
+     *
+     * @return array
+     */
     public function getRedirectParameters($resource = null)
     {
         $redirect = $this->get('redirect');
@@ -257,6 +295,11 @@ class Configuration
 	{
 		return sprintf('%s_%s', $this->rolePrefix, $name);
 	}
+
+    public function getSortablePosition()
+    {
+        return $this->get('sortable_position', 'position');
+    }
     
     protected function get($parameter, $default = null)
     {
