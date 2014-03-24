@@ -310,7 +310,7 @@ class ResourceController extends FOSRestController
 		$roleName = $config->getRole($roleName);
 		
 		if ($roleName !== false && !$this->get('security.context')->isGranted($roleName, $resource)) {
-			throw new AccessDenieException();
+			throw new AccessDeniedException();
 		}
 	}
     
