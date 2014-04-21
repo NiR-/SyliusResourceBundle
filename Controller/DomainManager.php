@@ -27,22 +27,22 @@ class DomainManager
     /**
      * @var ObjectManager
      */
-    private $manager;
+    protected $manager;
 
     /**
      * @var EventDispatcherInterface
      */
-    private $eventDispatcher;
+    protected $eventDispatcher;
 
     /**
      * @var FlashHelper
      */
-    private $flashHelper;
+    protected $flashHelper;
 
     /**
      * @var Configuration
      */
-    private $config;
+    protected $config;
 
     public function __construct(
         ObjectManager $manager,
