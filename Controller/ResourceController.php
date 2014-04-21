@@ -303,13 +303,22 @@ class ResourceController extends FOSRestController
 
         return $resource;
     }
+
+    public function isGranted($roleName, $resource = null)
+    {
+        $config = $this->getConfiguration();
+        $roleName = $config->getRole($roleName);
+
+        if ($roleName !== false && !$this->get('security.context')->isGranted($roleName, $resource)) {
+            return false;
+        }
+
+        return true;
+    }
 	
 	public function isGrantedOr403($roleName, $resource = null)
 	{
-		$config = $this->getConfiguration();
-		$roleName = $config->getRole($roleName);
-		
-		if ($roleName !== false && !$this->get('security.context')->isGranted($roleName, $resource)) {
+        if (!$this->isGranted($roleName, $resource)) {
 			throw new AccessDeniedException();
 		}
 	}
