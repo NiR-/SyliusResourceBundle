@@ -12,8 +12,7 @@
 namespace Sylius\Bundle\ResourceBundle\DependencyInjection;
 
 use Sylius\Bundle\ResourceBundle\DependencyInjection\Driver\DatabaseDriverFactory;
-use Sylius\Bundle\ResourceBundle\Exception\Driver\InvalidDriverException;
-use Sylius\Bundle\ResourceBundle\Exception\Driver\UnknownDriverException;
+use Sylius\Component\Resource\Exception\Driver\InvalidDriverException;
 use Symfony\Component\Config\Definition\ConfigurationInterface;
 use Symfony\Component\Config\Definition\Processor;
 use Symfony\Component\Config\FileLocator;
@@ -63,6 +62,8 @@ abstract class AbstractResourceExtension extends Extension
     ) {
         $processor = new Processor();
         $config    = $processor->processConfiguration($configuration, $config);
+
+        $config = $this->process($config, $container);
 
         $loader = new XmlFileLoader($container, new FileLocator($this->getConfigurationDirectory()));
 
@@ -134,7 +135,7 @@ abstract class AbstractResourceExtension extends Extension
      * @param XmlFileLoader         $loader
      * @param null|ContainerBuilder $container
      *
-     * @throws UnknownDriverException
+     * @throws InvalidDriverException
      */
     protected function loadDatabaseDriver(array $config, XmlFileLoader $loader, ContainerBuilder $container)
     {
@@ -179,7 +180,7 @@ abstract class AbstractResourceExtension extends Extension
      * Get the configuration directory
      *
      * @return string
-     * @throws \Exception
+     * @throws \RuntimeException
      */
     protected function getConfigurationDirectory()
     {
@@ -187,9 +188,23 @@ abstract class AbstractResourceExtension extends Extension
         $fileName = $reflector->getFileName();
 
         if (!is_dir($directory = dirname($fileName) . $this->configDirectory)) {
-            throw new \Exception(sprintf('The configuration directory "%s" does not exists.', $directory));
+            throw new \RuntimeException(sprintf('The configuration directory "%s" does not exists.', $directory));
         }
 
         return $directory;
+    }
+
+    /**
+     * In case any extra processing is needed.
+     *
+     * @param array            $config
+     * @param ContainerBuilder $container
+     *
+     * @return array
+     */
+    protected function process(array $config, ContainerBuilder $container)
+    {
+        // Override if needed.
+        return $config;
     }
 }

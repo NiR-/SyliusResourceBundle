@@ -127,7 +127,7 @@ class Configuration
 
     public function isApiRequest()
     {
-        return 'html' !== $this->request->getRequestFormat();
+        return null !== $this->request && 'html' !== $this->request->getRequestFormat();
     }
 
     public function getServiceName($service)
