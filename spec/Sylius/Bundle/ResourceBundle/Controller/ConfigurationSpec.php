@@ -17,7 +17,7 @@ class ConfigurationSpec extends ObjectBehavior
 {
     function let(Request $request, ParametersParser $parser)
     {
-        $this->beConstructedWith($parser, 'sylius', 'product', 'SyliusWebBundle:Product', 'twig', 'ROLE');
+        $this->beConstructedWith($parser, 'sylius', 'product', 'SyliusWebBundle:Product', 'ROLE', 'twig');
         $request->attributes = new ParameterBag();
     }
 
