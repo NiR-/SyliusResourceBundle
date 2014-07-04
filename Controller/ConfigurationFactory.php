@@ -42,7 +42,7 @@ class ConfigurationFactory
      * @param string $bundlePrefix
      * @param string $resourceName
      * @param string $templateNamespace
-	 * @param string $rolePrefix
+     * @param string $rolePrefix
      * @param string $templatingEngine
      *
      * @return Configuration

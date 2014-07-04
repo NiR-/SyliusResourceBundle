@@ -97,8 +97,8 @@ class ResourceController extends FOSRestController
      */
     public function showAction(Request $request)
     {
-    	$this->isGrantedOr403('SHOW', $this->find($request));
-		
+        $this->isGrantedOr403('SHOW', $this->find($request));
+
         $view = $this
             ->view()
             ->setTemplate($this->config->getTemplate('show.html'))
@@ -117,7 +117,7 @@ class ResourceController extends FOSRestController
     public function indexAction(Request $request)
     {
         $this->isGrantedOr403('INDEX');
-		
+
         $criteria = $this->config->getCriteria();
         $sorting = $this->config->getSorting();
 
@@ -156,8 +156,8 @@ class ResourceController extends FOSRestController
      */
     public function createAction(Request $request)
     {
-    	$this->isGrantedOr403('CREATE');
-		
+        $this->isGrantedOr403('CREATE');
+
         $resource = $this->createNew();
         $form = $this->getForm($resource);
 
@@ -194,8 +194,8 @@ class ResourceController extends FOSRestController
      */
     public function updateAction(Request $request)
     {
-    	$this->isGrantedOr403('UPDATE', $this->find($request));
-		
+        $this->isGrantedOr403('UPDATE', $this->find($request));
+
         $resource = $this->findOr404($request);
         $form = $this->getForm($resource);
         $method = $request->getMethod();
@@ -239,8 +239,8 @@ class ResourceController extends FOSRestController
      */
     public function deleteAction(Request $request)
     {
-    	$this->isGrantedOr403('DELETE', $this->find($request));
-		
+        $this->isGrantedOr403('DELETE', $this->find($request));
+
         $resource = $this->findOr404($request);
         $this->domainManager->delete($resource);
 
@@ -293,9 +293,9 @@ class ResourceController extends FOSRestController
 
         return $this->createForm($this->config->getFormType(), $resource);
     }
-	
-	public function find(Request $request, array $criteria = array())
-	{
+
+    public function find(Request $request, array $criteria = array())
+    {
         if ($request->get('slug')) {
             $default = array('slug' => $request->get('slug'));
         } else {
@@ -303,9 +303,9 @@ class ResourceController extends FOSRestController
         }
 
         $criteria = array_merge($default, $criteria);
-		
-		return $this->resourceResolver->getResource($this->getRepository(), 'findOneBy', array($this->config->getCriteria($criteria)));
-	}
+
+        return $this->resourceResolver->getResource($this->getRepository(), 'findOneBy', array($this->config->getCriteria($criteria)));
+    }
 
     /**
      * @param Request $request
@@ -355,13 +355,13 @@ class ResourceController extends FOSRestController
 
         return true;
     }
-	
-	public function isGrantedOr403($roleName, $resource = null)
-	{
+
+    public function isGrantedOr403($roleName, $resource = null)
+    {
         if (!$this->isGranted($roleName, $resource)) {
-			throw new AccessDeniedException();
-		}
-	}
+            throw new AccessDeniedException();
+        }
+    }
     
     /**
      * @return RepositoryInterface

@@ -280,21 +280,21 @@ class Configuration
 
         return $this->get('flash', $message);
     }
-	
-	public function getRole($name)
-	{
-		if (!empty($this->rolePrefix)) {
-			return $this->get('role', $this->getRoleName($name));
-		}
-		else {
-			return $this->get('role', false);
-		}
-	}
-	
-	public function getRoleName($name)
-	{
-		return sprintf('%s_%s', $this->rolePrefix, $name);
-	}
+
+    public function getRole($name)
+    {
+        if (!empty($this->rolePrefix)) {
+            return $this->get('role', $this->getRoleName($name));
+        }
+        else {
+            return $this->get('role', false);
+        }
+    }
+
+    public function getRoleName($name)
+    {
+        return sprintf('%s_%s', $this->rolePrefix, $name);
+    }
 
     public function getSortablePosition()
     {
