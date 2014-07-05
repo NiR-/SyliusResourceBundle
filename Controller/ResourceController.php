@@ -296,15 +296,21 @@ class ResourceController extends FOSRestController
 
     public function find(Request $request, array $criteria = array())
     {
+        $default = array();
+
         if ($request->get('slug')) {
             $default = array('slug' => $request->get('slug'));
-        } else {
+        } elseif ($request->get('id')) {
             $default = array('id' => $request->get('id'));
         }
 
         $criteria = array_merge($default, $criteria);
 
-        return $this->resourceResolver->getResource($this->getRepository(), 'findOneBy', array($this->config->getCriteria($criteria)));
+        return $this->resourceResolver->getResource(
+            $this->getRepository(),
+            'findOneBy',
+            array($this->config->getCriteria($criteria))
+        );
     }
 
     /**
@@ -317,21 +323,7 @@ class ResourceController extends FOSRestController
      */
     public function findOr404(Request $request, array $criteria = array())
     {
-        if ($request->get('slug')) {
-            $default = array('slug' => $request->get('slug'));
-        } elseif ($request->get('id')) {
-            $default = array('id' => $request->get('id'));
-        } else {
-            $default = array();
-        }
-
-        $criteria = array_merge($default, $criteria);
-
-        if (!$resource = $this->resourceResolver->getResource(
-            $this->getRepository(),
-            'findOneBy',
-            array($this->config->getCriteria($criteria)))
-        ) {
+        if (!$resource = $this->find($request, $criteria)) {
             throw new NotFoundHttpException(
                 sprintf(
                     'Requested %s does not exist with these criteria: %s.',
